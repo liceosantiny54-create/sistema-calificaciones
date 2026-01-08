@@ -51,8 +51,10 @@
 <div class="menu">
     <a href="{{ url_for('crear_docente') }}">➕ Crear nuevo docente</a>
     <a href="{{ url_for('logout') }}">🚪 Cerrar sesión</a>
-    <a href="{{ url_for('admin_materias') }}">📚 Administrar Materias</a>
 
+    <!-- ❌ ESTA RUTA NO EXISTE EN app.py (CAUSABA ERROR 500)
+    <a href="{{ url_for('admin_materias') }}">📚 Administrar Materias</a>
+    -->
 </div>
 
 <h2>📄 Alumnos registrados – Ciclo Escolar 2026</h2>
@@ -70,6 +72,7 @@
         <td>{{ alumno.nombre }}</td>
         <td>{{ alumno.grado }}</td>
         <td>
+            <!-- Estas rutas deben existir en app.py -->
             <a href="{{ url_for('generar_reporte_admin', alumno_id=alumno.id) }}">
                 📥 PDF
             </a>
@@ -102,3 +105,5 @@
 
 </body>
 </html>
+
+
