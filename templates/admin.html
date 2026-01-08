@@ -3,47 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel Administrador</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
             background: #f7f7f7;
             padding: 40px;
         }
+
         h1 {
             color: #333;
         }
+
         h2 {
             margin-top: 30px;
             color: #444;
         }
+
         a {
             text-decoration: none;
             color: #007BFF;
             font-weight: bold;
         }
+
         a:hover {
             text-decoration: underline;
         }
+
         table {
             border-collapse: collapse;
             width: 100%;
             background: white;
             margin-top: 15px;
         }
+
         th, td {
             border: 1px solid #ccc;
             padding: 10px;
             text-align: left;
         }
+
         th {
             background: #eaeaea;
         }
+
         .menu a {
             display: inline-block;
             margin-right: 20px;
         }
     </style>
 </head>
+
 <body>
 
 <h1>Panel del Administrador</h1>
@@ -51,10 +61,7 @@
 <div class="menu">
     <a href="{{ url_for('crear_docente') }}">➕ Crear nuevo docente</a>
     <a href="{{ url_for('logout') }}">🚪 Cerrar sesión</a>
-
-    <!-- ❌ ESTA RUTA NO EXISTE EN app.py (CAUSABA ERROR 500)
     <a href="{{ url_for('admin_materias') }}">📚 Administrar Materias</a>
-    -->
 </div>
 
 <h2>📄 Alumnos registrados – Ciclo Escolar 2026</h2>
@@ -72,7 +79,6 @@
         <td>{{ alumno.nombre }}</td>
         <td>{{ alumno.grado }}</td>
         <td>
-            <!-- Estas rutas deben existir en app.py -->
             <a href="{{ url_for('generar_reporte_admin', alumno_id=alumno.id) }}">
                 📥 PDF
             </a>
@@ -91,19 +97,20 @@
 <h3>📦 Descarga masiva por grado</h3>
 
 <ul>
-  {% for grado in grados %}
+    {% for grado in grados %}
     <li>
-      {{ grado }} —
-      <a href="{{ url_for('descargar_pdfs_por_grado', grado=grado) }}">
-        Descargar todos los PDFs
-      </a>
+        {{ grado }} —
+        <a href="{{ url_for('descargar_pdfs_por_grado', grado=grado) }}">
+            Descargar todos los PDFs
+        </a>
     </li>
-  {% endfor %}
+    {% endfor %}
 </ul>
 
 <hr>
 
 </body>
 </html>
+
 
 
