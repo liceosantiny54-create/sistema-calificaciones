@@ -11,7 +11,13 @@ import os
 # ================= APP =================
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'clave-secreta-segura'
+
+# 🔧 ASEGURAR CARPETA INSTANCE (RENDER)
+os.makedirs(app.instance_path, exist_ok=True)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 # ================= MODELOS =================
@@ -130,8 +136,6 @@ def docente():
         return redirect(url_for("login"))
 
     alumnos = Alumno.query.with_entities(Alumno.nombre, Alumno.grado).all()
-
-    # 🔧 OBTENER GRADO DESDE POST (hidden input)
     grado = request.form.get("grado")
     materias = []
 
@@ -142,16 +146,9 @@ def docente():
         alumno = Alumno.query.filter_by(nombre=request.form["nombre"]).first()
 
         if not alumno:
-            alumno = Alumno(
-                nombre=request.form["nombre"],
-                grado=grado
-            )
+            alumno = Alumno(nombre=request.form["nombre"], grado=grado)
             db.session.add(alumno)
             db.session.commit()
-
-        if not Materia.query.filter_by(nombre=request.form["materia"], grado=alumno.grado).first():
-            flash("Materia no válida para el grado", "error")
-            return redirect(url_for("docente"))
 
         if Nota.query.filter_by(
             alumno_id=alumno.id,
@@ -172,47 +169,7 @@ def docente():
         registrar_auditoria("CREAR_NOTA", alumno.nombre)
         flash("Nota registrada", "success")
 
-    return render_template(
-        "docente.html",
-        alumnos=alumnos,
-        materias=materias
-    )
-
-@app.route("/admin/reporte/<int:alumno_id>")
-@login_required
-def generar_reporte_admin(alumno_id):
-    alumno = Alumno.query.get_or_404(alumno_id)
-    notas = Nota.query.filter_by(alumno_id=alumno.id).all()
-    pdf = generar_boletin_pdf(alumno, notas)
-    return send_file(pdf, as_attachment=True)
-
-@app.route("/admin/descargar_grado/<grado>")
-@login_required
-def descargar_pdfs_por_grado(grado):
-    carpeta = "zip_temp"
-    os.makedirs(carpeta, exist_ok=True)
-    ruta = os.path.join(carpeta, f"{grado}.zip")
-
-    with zipfile.ZipFile(ruta, "w") as zipf:
-        for alumno in Alumno.query.filter_by(grado=grado).all():
-            notas = Nota.query.filter_by(alumno_id=alumno.id).all()
-            if notas:
-                pdf = generar_boletin_pdf(alumno, notas)
-                zipf.write(pdf, os.path.basename(pdf))
-
-    return send_file(ruta, as_attachment=True)
-
-@app.route("/admin/editar_notas/<int:alumno_id>", methods=["GET", "POST"])
-@login_required
-def editar_notas(alumno_id):
-    alumno = Alumno.query.get_or_404(alumno_id)
-    notas = Nota.query.filter_by(alumno_id=alumno.id).all()
-    if request.method == "POST":
-        for nota in notas:
-            nota.puntaje = float(request.form.get(f"puntaje_{nota.id}"))
-        db.session.commit()
-        return redirect(url_for("admin"))
-    return render_template("editar_notas.html", alumno=alumno, notas=notas)
+    return render_template("docente.html", alumnos=alumnos, materias=materias)
 
 @app.route("/logout")
 @login_required
@@ -220,54 +177,28 @@ def logout():
     registrar_auditoria("LOGOUT", current_user.correo)
     logout_user()
     return redirect(url_for("login"))
-@app.route("/admin/materias", methods=["GET", "POST"])
-@login_required
-def admin_materias():
-    if current_user.rol != "admin":
-        return redirect(url_for("login"))
 
-    if request.method == "POST":
-        nombre = request.form["nombre"].strip()
-        grado = request.form["grado"].strip()
+# ================= INICIALIZACIÓN BD =================
+with app.app_context():
+    db.create_all()
 
+    if not Usuario.query.filter_by(correo="admin@colegio.com").first():
+        admin = Usuario(nombre="Administrador", correo="admin@colegio.com", rol="admin")
+        admin.set_password("admin123")
+        db.session.add(admin)
+
+    materias = [
+        ("Matemática", "Primero Primaria"),
+        ("Lenguaje", "Primero Primaria"),
+        ("Ciencias", "Primero Primaria"),
+        ("Matemática", "Segundo Primaria"),
+        ("Lenguaje", "Segundo Primaria"),
+        ("Sociales", "Segundo Primaria"),
+    ]
+
+    for nombre, grado in materias:
         if not Materia.query.filter_by(nombre=nombre, grado=grado).first():
             db.session.add(Materia(nombre=nombre, grado=grado))
-            db.session.commit()
-            flash("Materia agregada correctamente", "success")
-        else:
-            flash("La materia ya existe para ese grado", "error")
 
-    materias = Materia.query.order_by(Materia.grado, Materia.nombre).all()
-    return render_template("admin_materias.html", materias=materias)
+    db.session.commit()
 
-
-# ================= INICIO =================
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-
-        if not Usuario.query.filter_by(correo="admin@colegio.com").first():
-            admin = Usuario(
-                nombre="Administrador",
-                correo="admin@colegio.com",
-                rol="admin"
-            )
-            admin.set_password("admin123")
-            db.session.add(admin)
-
-        materias = [
-            ("Matemática", "Primero Primaria"),
-            ("Lenguaje", "Primero Primaria"),
-            ("Ciencias", "Primero Primaria"),
-            ("Matemática", "Segundo Primaria"),
-            ("Lenguaje", "Segundo Primaria"),
-            ("Sociales", "Segundo Primaria"),
-        ]
-
-        for nombre, grado in materias:
-            if not Materia.query.filter_by(nombre=nombre, grado=grado).first():
-                db.session.add(Materia(nombre=nombre, grado=grado))
-
-        db.session.commit()
-
-    app.run(debug=True)
