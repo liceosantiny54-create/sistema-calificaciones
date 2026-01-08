@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Notas</title>
+    <style>
+        body { font-family: Arial; padding: 30px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #eee; }
+        input, select { width: 100%; }
+    </style>
+</head>
+<body>
+
+<h2>Editar notas – {{ alumno.nombre }} ({{ alumno.grado }})</h2>
+
+<form method="post">
+<table>
+    <tr>
+        <th>Materia</th>
+        <th>Bloque</th>
+        <th>Puntaje</th>
+    </tr>
+
+    {% for nota in notas %}
+    <tr>
+        <td>
+            <input type="text" name="materia_{{ nota.id }}" value="{{ nota.materia }}" required>
+        </td>
+        <td>
+            <select name="bloque_{{ nota.id }}">
+                <option value="1" {% if nota.bloque == 1 %}selected{% endif %}>Bloque 1</option>
+                <option value="2" {% if nota.bloque == 2 %}selected{% endif %}>Bloque 2</option>
+                <option value="3" {% if nota.bloque == 3 %}selected{% endif %}>Bloque 3</option>
+                <option value="4" {% if nota.bloque == 4 %}selected{% endif %}>Bloque 4</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" step="0.01" min="0" max="100"
+                   name="puntaje_{{ nota.id }}" value="{{ nota.puntaje }}" required>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<button type="submit">💾 Guardar cambios</button>
+<a href="{{ url_for('admin') }}">⬅ Volver</a>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Materias por Grado</title>
+</head>
+<body>
+
+<h2>📚 Cargar Materias por Grado</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">
+      {{ message }}
+    </p>
+  {% endfor %}
+{% endwith %}
+
+<form method="post">
+    <label>Grado:</label><br>
+    <input type="text" name="grado" required><br><br>
+
+    <label>Materia:</label><br>
+    <input type="text" name="nombre" required><br><br>
+
+    <button type="submit">Guardar Materia</button>
+</form>
+
+<hr>
+
+<h3>Materias registradas</h3>
+<ul>
+{% for m in materias %}
+    <li>{{ m.grado }} — {{ m.nombre }}</li>
+{% endfor %}
+</ul>
+
+<br>
+<a href="{{ url_for('admin') }}">⬅ Volver</a>
+
+</body>
+</html>

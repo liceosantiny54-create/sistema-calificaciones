@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Crear Docente</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 50px; }
+        h2 { color: #333; text-align: center; }
+        form { background: white; padding: 20px; border-radius: 8px; width: 300px; margin: auto; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        button { background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .mensaje-exito { color: green; margin-bottom: 10px; }
+        .mensaje-error { color: red; margin-bottom: 10px; }
+        a { display: block; margin-top: 10px; text-align:center; text-decoration: none; color: #007BFF; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h2>Crear Nuevo Docente</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mensaje-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post">
+        <input type="text" name="nombre" placeholder="Nombre completo" required>
+        <input type="email" name="correo" placeholder="Correo" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">Crear Docente</button>
+    </form>
+
+    <a href="/admin">Volver al panel admin</a>
+</body>
+</html>

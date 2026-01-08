@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Docente</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 50px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 420px;
+      margin: auto;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+    }
+
+    button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Panel Docente – Registro de Calificaciones</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <p>{{ message }}</p>
+  {% endfor %}
+{% endwith %}
+
+<form method="post">
+
+  <!-- ALUMNO -->
+  <label>Nombre del Alumno:</label>
+  <input list="listaAlumnos" name="nombre" required>
+
+  <datalist id="listaAlumnos">
+    {% for alumno in alumnos %}
+      <option value="{{ alumno.nombre }}" data-grado="{{ alumno.grado }}"></option>
+    {% endfor %}
+  </datalist>
+
+  <!-- GRADO -->
+  <label>Grado:</label>
+  <select name="grado" onchange="this.form.submit()" required>
+    <option value="">Seleccione grado</option>
+
+    {% set grados = [
+      'Parvulos 1','Parvulos 2','Parvulos 3',
+      'Primero Primaria','Segundo Primaria','Tercero Primaria',
+      'Cuarto Primaria','Quinto Primaria','Sexto Primaria',
+      'Primero Básico','Segundo Básico','Tercero Básico',
+      'Cuarto Bachillerato','Quinto Bachillerato',
+      'Cuarto Perito Contador','Quinto Perito Contador','Sexto Perito Contador'
+    ] %}
+
+    {% for g in grados %}
+      <option value="{{ g }}" {% if request.form.grado == g %}selected{% endif %}>
+        {{ g }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- MATERIA -->
+  <label>Materia:</label>
+  <select name="materia" required>
+    <option value="">Seleccione materia</option>
+    {% for m in materias %}
+      <option value="{{ m.nombre }}">{{ m.nombre }}</option>
+    {% endfor %}
+  </select>
+
+  <!-- BLOQUE -->
+  <label>Bloque:</label>
+  <select name="bloque" required>
+    <option value="">Seleccione bloque</option>
+    <option value="1">Bloque 1</option>
+    <option value="2">Bloque 2</option>
+    <option value="3">Bloque 3</option>
+    <option value="4">Bloque 4</option>
+  </select>
+
+  <!-- PUNTAJE -->
+  <label>Puntaje:</label>
+  <input type="number" name="puntaje" min="0" max="100" step="0.01" required>
+
+  <button type="submit">Registrar Nota</button>
+</form>
+
+<br>
+<a href="/logout">Cerrar sesión</a>
+
+</body>
+</html>
