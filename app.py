@@ -128,6 +128,29 @@ def crear_docente():
             flash("Docente creado", "success")
     return render_template("crear_docente.html")
 
+# ================= ADMIN MATERIAS (✔ FIX) =================
+@app.route("/admin/materias", methods=["GET", "POST"])
+@login_required
+def admin_materias():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    materias = Materia.query.order_by(Materia.grado, Materia.nombre).all()
+
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        grado = request.form["grado"]
+
+        if not Materia.query.filter_by(nombre=nombre, grado=grado).first():
+            db.session.add(Materia(nombre=nombre, grado=grado))
+            db.session.commit()
+            registrar_auditoria("CREAR_MATERIA", f"{nombre} - {grado}")
+            flash("Materia creada correctamente", "success")
+        else:
+            flash("La materia ya existe para ese grado", "error")
+
+    return render_template("admin_materias.html", materias=materias)
+
 # ================= DOCENTE =================
 @app.route("/docente", methods=["GET", "POST"])
 @login_required
