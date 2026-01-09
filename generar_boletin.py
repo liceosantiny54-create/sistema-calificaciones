@@ -1,4 +1,4 @@
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -9,8 +9,14 @@ import os
 
 
 def generar_boletin_pdf(alumno, notas):
-    # ================= CARPETAS =================
-    carpeta_base = "pdfs"
+    # ================= RUTA ABSOLUTA BASE =================
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    # ================= RUTA LOGO (STATIC) =================
+    logo_path = os.path.join(BASE_DIR, "static", "logo.jpg")
+
+    # ================= CARPETAS PDF =================
+    carpeta_base = os.path.join(BASE_DIR, "pdfs")
     carpeta_grado = os.path.join(carpeta_base, alumno.grado)
 
     os.makedirs(carpeta_grado, exist_ok=True)
@@ -30,6 +36,13 @@ def generar_boletin_pdf(alumno, notas):
 
     styles = getSampleStyleSheet()
     elementos = []
+
+    # ================= LOGO =================
+    if os.path.exists(logo_path):
+        logo = Image(logo_path, width=4 * cm, height=4 * cm)
+        logo.hAlign = "CENTER"
+        elementos.append(logo)
+        elementos.append(Paragraph("<br/>", styles["Normal"]))
 
     # ================= ENCABEZADO =================
     elementos.append(Paragraph(
@@ -99,3 +112,5 @@ def generar_boletin_pdf(alumno, notas):
     doc.build(elementos)
 
     return ruta_pdf
+
+
