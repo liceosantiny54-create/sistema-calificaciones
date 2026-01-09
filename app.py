@@ -200,6 +200,70 @@ def logout():
     registrar_auditoria("LOGOUT", current_user.correo)
     logout_user()
     return redirect(url_for("login"))
+    # ================= REPORTES ADMIN =================
+@app.route("/admin/reporte/<int:alumno_id>")
+@login_required
+def generar_reporte_admin(alumno_id):
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    alumno = Alumno.query.get_or_404(alumno_id)
+    notas = Nota.query.filter_by(alumno_id=alumno.id).all()
+
+    if not notas:
+        flash("El alumno no tiene notas registradas", "error")
+        return redirect(url_for("admin"))
+
+    pdf = generar_boletin_pdf(alumno, notas)
+    return send_file(pdf, as_attachment=True)
+
+
+# ================= EDITAR NOTAS ADMIN =================
+@app.route("/admin/editar_notas/<int:alumno_id>", methods=["GET", "POST"])
+@login_required
+def editar_notas(alumno_id):
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    alumno = Alumno.query.get_or_404(alumno_id)
+    notas = Nota.query.filter_by(alumno_id=alumno.id).all()
+
+    if request.method == "POST":
+        for nota in notas:
+            nuevo = request.form.get(f"puntaje_{nota.id}")
+            if nuevo:
+                nota.puntaje = float(nuevo)
+
+        db.session.commit()
+        registrar_auditoria("EDITAR_NOTAS", alumno.nombre)
+        flash("Notas actualizadas correctamente", "success")
+        return redirect(url_for("admin"))
+
+    return render_template("editar_notas.html", alumno=alumno, notas=notas)
+
+
+# ================= DESCARGA MASIVA POR GRADO =================
+@app.route("/admin/descargar_grado/<grado>")
+@login_required
+def descargar_pdfs_por_grado(grado):
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    carpeta = "zip_temp"
+    os.makedirs(carpeta, exist_ok=True)
+    ruta_zip = os.path.join(carpeta, f"{grado}.zip")
+
+    with zipfile.ZipFile(ruta_zip, "w") as zipf:
+        alumnos = Alumno.query.filter_by(grado=grado).all()
+        for alumno in alumnos:
+            notas = Nota.query.filter_by(alumno_id=alumno.id).all()
+            if notas:
+                pdf = generar_boletin_pdf(alumno, notas)
+                zipf.write(pdf, os.path.basename(pdf))
+
+    registrar_auditoria("DESCARGA_ZIP", grado)
+    return send_file(ruta_zip, as_attachment=True)
+
 
 # ================= INICIALIZACIÓN BD =================
 with app.app_context():
@@ -224,4 +288,5 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
