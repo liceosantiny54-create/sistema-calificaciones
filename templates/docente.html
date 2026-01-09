@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Panel Docente</title>
@@ -38,6 +38,17 @@
       color: white;
       border: none;
       border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .mensaje {
+      text-align: center;
+      color: red;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -48,71 +59,67 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for category, message in messages %}
-    <p>{{ message }}</p>
+    <p class="mensaje">{{ message }}</p>
   {% endfor %}
 {% endwith %}
 
 <form method="post">
 
-  <!-- ALUMNO -->
-  <label>Nombre del Alumno:</label>
-  <input list="listaAlumnos" name="nombre" required>
-
-  <datalist id="listaAlumnos">
-    {% for alumno in alumnos %}
-      <option value="{{ alumno.nombre }}" data-grado="{{ alumno.grado }}"></option>
-    {% endfor %}
-  </datalist>
-
-  <!-- GRADO -->
+  <!-- GRADO (SOLO LOS ASIGNADOS) -->
   <label>Grado:</label>
   <select name="grado" onchange="this.form.submit()" required>
     <option value="">Seleccione grado</option>
-
-    {% set grados = [
-      'Parvulos 1','Parvulos 2','Parvulos 3',
-      'Primero Primaria','Segundo Primaria','Tercero Primaria',
-      'Cuarto Primaria','Quinto Primaria','Sexto Primaria',
-      'Primero Básico','Segundo Básico','Tercero Básico',
-      'Cuarto Bachillerato','Quinto Bachillerato',
-      'Cuarto Perito Contador','Quinto Perito Contador','Sexto Perito Contador'
-    ] %}
-
-    {% for g in grados %}
-      <option value="{{ g }}" {% if request.form.grado == g %}selected{% endif %}>
-        {{ g }}
+    {% for grado in grados %}
+      <option value="{{ grado }}"
+        {% if request.form.grado == grado %}selected{% endif %}>
+        {{ grado }}
       </option>
     {% endfor %}
   </select>
 
-  <!-- MATERIA -->
-  <label>Materia:</label>
-  <select name="materia" required>
-    <option value="">Seleccione materia</option>
-    {% for m in materias %}
-      <option value="{{ m.nombre }}">{{ m.nombre }}</option>
-    {% endfor %}
-  </select>
+  {% if request.form.grado %}
 
-  <!-- BLOQUE -->
-  <label>Bloque:</label>
-  <select name="bloque" required>
-    <option value="">Seleccione bloque</option>
-    <option value="1">Bloque 1</option>
-    <option value="2">Bloque 2</option>
-    <option value="3">Bloque 3</option>
-    <option value="4">Bloque 4</option>
-  </select>
+    <!-- MATERIA (SOLO LAS ASIGNADAS AL GRADO) -->
+    <label>Materia:</label>
+    <select name="materia_id" required>
+      <option value="">Seleccione materia</option>
+      {% for materia in materias_por_grado[request.form.grado] %}
+        <option value="{{ materia.id }}">
+          {{ materia.nombre }}
+        </option>
+      {% endfor %}
+    </select>
 
-  <!-- PUNTAJE -->
-  <label>Puntaje:</label>
-  <input type="number" name="puntaje" min="0" max="100" step="0.01" required>
+    <!-- ALUMNO -->
+    <label>Nombre del Alumno:</label>
+    <input type="text" name="nombre" placeholder="Nombre del alumno" required>
 
-  <button type="submit">Registrar Nota</button>
+    <!-- BLOQUE -->
+    <label>Bloque:</label>
+    <select name="bloque" required>
+      <option value="">Seleccione bloque</option>
+      <option value="1">Bloque 1</option>
+      <option value="2">Bloque 2</option>
+      <option value="3">Bloque 3</option>
+      <option value="4">Bloque 4</option>
+    </select>
+
+    <!-- PUNTAJE -->
+    <label>Puntaje:</label>
+    <input type="number" name="puntaje" min="0" max="100" step="0.01" required>
+
+    <button type="submit">Registrar Nota</button>
+
+  {% endif %}
+
 </form>
 
 <br>
-<a href="/logout">Cerrar sesión</a>
+<div style="text-align:center;">
+  <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+</div>
 
 </body>
 </html>
+
+
