@@ -10,7 +10,11 @@ import os
 
 # ================= APP =================
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'clave-secreta-segura'
+
+# 🔐 SECRET KEY DESDE VARIABLE DE ENTORNO
+app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
+if not app.config['SECRET_KEY']:
+    raise RuntimeError("SECRET_KEY no definida en variables de entorno")
 
 # 🔧 ASEGURAR CARPETA INSTANCE (RENDER)
 os.makedirs(app.instance_path, exist_ok=True)
@@ -80,6 +84,14 @@ def registrar_auditoria(accion, descripcion):
         ))
         db.session.commit()
 
+# ================= LOGIN =================
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.query.get(int(user_id))
+
 # ================= CAMBIAR CONTRASEÑA ADMIN =================
 @app.route("/admin/cambiar_password", methods=["GET", "POST"])
 @login_required
@@ -92,12 +104,10 @@ def cambiar_password_admin():
         nueva = request.form["nueva"]
         confirmar = request.form["confirmar"]
 
-        # Verificar contraseña actual
         if not current_user.check_password(actual):
             flash("La contraseña actual es incorrecta", "error")
             return redirect(url_for("cambiar_password_admin"))
 
-        # Validaciones básicas de seguridad
         if len(nueva) < 10:
             flash("La nueva contraseña debe tener al menos 10 caracteres", "error")
             return redirect(url_for("cambiar_password_admin"))
@@ -106,25 +116,14 @@ def cambiar_password_admin():
             flash("Las contraseñas no coinciden", "error")
             return redirect(url_for("cambiar_password_admin"))
 
-        # Guardar nueva contraseña
         current_user.set_password(nueva)
         db.session.commit()
 
         registrar_auditoria("CAMBIO_PASSWORD", current_user.correo)
         flash("Contraseña actualizada correctamente", "success")
-
         return redirect(url_for("admin"))
 
     return render_template("cambiar_password.html")
-
-
-# ================= LOGIN =================
-login_manager = LoginManager(app)
-login_manager.login_view = "login"
-
-@login_manager.user_loader
-def load_user(user_id):
-    return Usuario.query.get(int(user_id))
 
 # ================= RUTAS =================
 @app.route("/", methods=["GET", "POST"])
@@ -166,7 +165,6 @@ def crear_docente():
             flash("Docente creado", "success")
     return render_template("crear_docente.html")
 
-# ================= ADMIN MATERIAS (✔ FIX) =================
 @app.route("/admin/materias", methods=["GET", "POST"])
 @login_required
 def admin_materias():
@@ -189,7 +187,6 @@ def admin_materias():
 
     return render_template("admin_materias.html", materias=materias)
 
-# ================= DOCENTE =================
 @app.route("/docente", methods=["GET", "POST"])
 @login_required
 def docente():
@@ -238,7 +235,8 @@ def logout():
     registrar_auditoria("LOGOUT", current_user.correo)
     logout_user()
     return redirect(url_for("login"))
-    # ================= REPORTES ADMIN =================
+
+# ================= REPORTES ADMIN =================
 @app.route("/admin/reporte/<int:alumno_id>")
 @login_required
 def generar_reporte_admin(alumno_id):
@@ -254,7 +252,6 @@ def generar_reporte_admin(alumno_id):
 
     pdf = generar_boletin_pdf(alumno, notas)
     return send_file(pdf, as_attachment=True)
-
 
 # ================= EDITAR NOTAS ADMIN =================
 @app.route("/admin/editar_notas/<int:alumno_id>", methods=["GET", "POST"])
@@ -279,7 +276,6 @@ def editar_notas(alumno_id):
 
     return render_template("editar_notas.html", alumno=alumno, notas=notas)
 
-
 # ================= DESCARGA MASIVA POR GRADO =================
 @app.route("/admin/descargar_grado/<grado>")
 @login_required
@@ -302,14 +298,19 @@ def descargar_pdfs_por_grado(grado):
     registrar_auditoria("DESCARGA_ZIP", grado)
     return send_file(ruta_zip, as_attachment=True)
 
-
 # ================= INICIALIZACIÓN BD =================
 with app.app_context():
     db.create_all()
 
-    if not Usuario.query.filter_by(correo="admin@colegio.com").first():
-        admin = Usuario(nombre="Administrador", correo="admin@colegio.com", rol="admin")
-        admin.set_password("admin123")
+    admin_email = os.environ.get("ADMIN_EMAIL")
+    admin_password = os.environ.get("ADMIN_PASSWORD")
+
+    if not admin_email or not admin_password:
+        raise RuntimeError("ADMIN_EMAIL o ADMIN_PASSWORD no definidos")
+
+    if not Usuario.query.filter_by(correo=admin_email).first():
+        admin = Usuario(nombre="Administrador", correo=admin_email, rol="admin")
+        admin.set_password(admin_password)
         db.session.add(admin)
 
     materias = [
@@ -326,6 +327,7 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
 
