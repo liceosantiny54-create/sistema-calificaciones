@@ -80,6 +80,44 @@ def registrar_auditoria(accion, descripcion):
         ))
         db.session.commit()
 
+# ================= CAMBIAR CONTRASEÑA ADMIN =================
+@app.route("/admin/cambiar_password", methods=["GET", "POST"])
+@login_required
+def cambiar_password_admin():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        actual = request.form["actual"]
+        nueva = request.form["nueva"]
+        confirmar = request.form["confirmar"]
+
+        # Verificar contraseña actual
+        if not current_user.check_password(actual):
+            flash("La contraseña actual es incorrecta", "error")
+            return redirect(url_for("cambiar_password_admin"))
+
+        # Validaciones básicas de seguridad
+        if len(nueva) < 10:
+            flash("La nueva contraseña debe tener al menos 10 caracteres", "error")
+            return redirect(url_for("cambiar_password_admin"))
+
+        if nueva != confirmar:
+            flash("Las contraseñas no coinciden", "error")
+            return redirect(url_for("cambiar_password_admin"))
+
+        # Guardar nueva contraseña
+        current_user.set_password(nueva)
+        db.session.commit()
+
+        registrar_auditoria("CAMBIO_PASSWORD", current_user.correo)
+        flash("Contraseña actualizada correctamente", "success")
+
+        return redirect(url_for("admin"))
+
+    return render_template("cambiar_password.html")
+
+
 # ================= LOGIN =================
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
@@ -288,5 +326,6 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
