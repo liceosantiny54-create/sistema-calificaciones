@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administrar Alumnos</title>
+</head>
+<body>
+
+<h2>Registrar Alumno</h2>
+
+<form method="POST">
+    <input type="text" name="nombre" placeholder="Nombre del alumno" required>
+    <input type="text" name="grado" placeholder="Grado" required>
+    <button type="submit">Registrar</button>
+</form>
+
+<hr>
+
+<h3>Listado de alumnos</h3>
+<ul>
+    {% for alumno in alumnos %}
+        <li>{{ alumno.nombre }} — {{ alumno.grado }}</li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('admin') }}">Volver</a>
+
+</body>
+</html>

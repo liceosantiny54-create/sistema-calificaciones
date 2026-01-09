@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Asignaciones Docente</title>
+</head>
+<body>
+
+<h2>Asignar Materia a Docente</h2>
+
+<form method="POST">
+    <label>Docente:</label>
+    <select name="docente_id" required>
+        {% for d in docentes %}
+            <option value="{{ d.id }}">{{ d.nombre }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Materia:</label>
+    <select name="materia_id" required>
+        {% for m in materias %}
+            <option value="{{ m.id }}">{{ m.nombre }} ({{ m.grado }})</option>
+        {% endfor %}
+    </select>
+
+    <label>Grado:</label>
+    <input type="text" name="grado" required>
+
+    <button type="submit">Asignar</button>
+</form>
+
+<hr>
+
+<h3>Asignaciones actuales</h3>
+<ul>
+    {% for a in asignaciones %}
+        <li>
+            {{ a.docente.nombre }} →
+            {{ a.materia.nombre }} ({{ a.grado }})
+        </li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('admin') }}">Volver</a>
+
+</body>
+</html>
