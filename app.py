@@ -65,6 +65,20 @@ class Materia(db.Model):
         db.UniqueConstraint('nombre', 'grado', name='uq_materia_grado'),
     )
 
+class Asignacion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    docente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    materia_id = db.Column(db.Integer, db.ForeignKey('materia.id'), nullable=False)
+    grado = db.Column(db.String(50), nullable=False)
+
+    docente = db.relationship('Usuario')
+    materia = db.relationship('Materia')
+
+    __table_args__ = (
+        db.UniqueConstraint('docente_id', 'materia_id', 'grado', name='uq_asignacion_docente'),
+    )
+
+
 class Auditoria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
@@ -193,24 +207,39 @@ def docente():
     if current_user.rol != "docente":
         return redirect(url_for("login"))
 
-    alumnos = Alumno.query.with_entities(Alumno.nombre, Alumno.grado).all()
-    grado = request.form.get("grado")
-    materias = []
+    asignaciones = Asignacion.query.filter_by(
+        docente_id=current_user.id
+    ).all()
 
-    if grado:
-        materias = Materia.query.filter_by(grado=grado).order_by(Materia.nombre).all()
+    grados = sorted(set(a.grado for a in asignaciones))
+    materias_por_grado = {}
 
-    if request.method == "POST" and request.form.get("materia"):
-        alumno = Alumno.query.filter_by(nombre=request.form["nombre"]).first()
+    for a in asignaciones:
+        materias_por_grado.setdefault(a.grado, []).append(a.materia)
+
+    if request.method == "POST":
+        alumno = Alumno.query.filter_by(
+            nombre=request.form["nombre"],
+            grado=request.form["grado"]
+        ).first()
 
         if not alumno:
-            alumno = Alumno(nombre=request.form["nombre"], grado=grado)
-            db.session.add(alumno)
-            db.session.commit()
+            flash("Alumno no encontrado en ese grado", "error")
+            return redirect(url_for("docente"))
+
+        permitido = Asignacion.query.filter_by(
+            docente_id=current_user.id,
+            materia_id=request.form["materia_id"],
+            grado=request.form["grado"]
+        ).first()
+
+        if not permitido:
+            flash("No autorizado", "error")
+            return redirect(url_for("docente"))
 
         if Nota.query.filter_by(
             alumno_id=alumno.id,
-            materia=request.form["materia"],
+            materia=permitido.materia.nombre,
             bloque=request.form["bloque"]
         ).first():
             flash("Nota duplicada", "error")
@@ -218,7 +247,7 @@ def docente():
 
         db.session.add(Nota(
             alumno_id=alumno.id,
-            materia=request.form["materia"],
+            materia=permitido.materia.nombre,
             bloque=int(request.form["bloque"]),
             puntaje=float(request.form["puntaje"])
         ))
@@ -227,7 +256,74 @@ def docente():
         registrar_auditoria("CREAR_NOTA", alumno.nombre)
         flash("Nota registrada", "success")
 
-    return render_template("docente.html", alumnos=alumnos, materias=materias)
+    return render_template(
+        "docente.html",
+        grados=grados,
+        materias_por_grado=materias_por_grado
+    )
+
+
+@app.route("/admin/alumnos", methods=["GET", "POST"])
+@login_required
+def admin_alumnos():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    alumnos = Alumno.query.order_by(Alumno.grado, Alumno.nombre).all()
+
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        grado = request.form["grado"]
+
+        if not Alumno.query.filter_by(nombre=nombre).first():
+            db.session.add(Alumno(nombre=nombre, grado=grado))
+            db.session.commit()
+            registrar_auditoria("CREAR_ALUMNO", nombre)
+            flash("Alumno registrado correctamente", "success")
+        else:
+            flash("El alumno ya existe", "error")
+
+    return render_template("admin_alumnos.html", alumnos=alumnos)
+
+@app.route("/admin/asignaciones", methods=["GET", "POST"])
+@login_required
+def admin_asignaciones():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    docentes = Usuario.query.filter_by(rol="docente").all()
+    materias = Materia.query.order_by(Materia.grado, Materia.nombre).all()
+    asignaciones = Asignacion.query.all()
+
+    if request.method == "POST":
+        docente_id = request.form["docente_id"]
+        materia_id = request.form["materia_id"]
+        grado = request.form["grado"]
+
+        existe = Asignacion.query.filter_by(
+            docente_id=docente_id,
+            materia_id=materia_id,
+            grado=grado
+        ).first()
+
+        if not existe:
+            db.session.add(Asignacion(
+                docente_id=docente_id,
+                materia_id=materia_id,
+                grado=grado
+            ))
+            db.session.commit()
+            registrar_auditoria("ASIGNAR_MATERIA", f"Docente {docente_id}")
+            flash("Asignación creada", "success")
+        else:
+            flash("Asignación duplicada", "error")
+
+    return render_template(
+        "admin_asignaciones.html",
+        docentes=docentes,
+        materias=materias,
+        asignaciones=asignaciones
+    )
 
 @app.route("/logout")
 @login_required
@@ -327,6 +423,7 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
 
