@@ -141,8 +141,38 @@
   <a href="{{ url_for('logout') }}">Cerrar sesión</a>
 </div>
 
+<script>
+document.querySelector('select[name="grado"]').addEventListener('change', function () {
+
+  const grado = this.value;
+
+  if (!grado) return;
+
+  fetch(`/ajax/alumnos_materias?grado=${encodeURIComponent(grado)}`)
+    .then(response => response.json())
+    .then(data => {
+
+      const materiaSelect = document.querySelector('select[name="materia_id"]');
+      const alumnoSelect = document.querySelector('select[name="nombre"]');
+
+      materiaSelect.innerHTML = '<option value="">Seleccione materia</option>';
+      alumnoSelect.innerHTML = '<option value="">Seleccione alumno</option>';
+
+      data.materias.forEach(m => {
+        materiaSelect.innerHTML += `<option value="${m.id}">${m.nombre}</option>`;
+      });
+
+      data.alumnos.forEach(a => {
+        alumnoSelect.innerHTML += `<option value="${a}">${a}</option>`;
+      });
+    });
+});
+</script>
+
+
 </body>
 </html>
+
 
 
 
