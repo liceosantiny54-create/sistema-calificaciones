@@ -295,6 +295,32 @@ def docente():
         alumnos_por_grado=alumnos_por_grado
     )
 
+@app.route("/ajax/alumnos_materias")
+@login_required
+def ajax_alumnos_materias():
+    if current_user.rol != "docente":
+        return {"error": "No autorizado"}
+
+    grado = request.args.get("grado")
+
+    asignaciones = Asignacion.query.filter_by(
+        docente_id=current_user.id,
+        grado=grado
+    ).all()
+
+    materias = [
+        {"id": a.materia.id, "nombre": a.materia.nombre}
+        for a in asignaciones
+    ]
+
+    alumnos = Alumno.query.filter_by(grado=grado).order_by(Alumno.nombre).all()
+
+    return {
+        "materias": materias,
+        "alumnos": [a.nombre for a in alumnos]
+    }
+
+
 
 @app.route("/admin/alumnos", methods=["GET", "POST"])
 @login_required
@@ -460,6 +486,7 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
 
