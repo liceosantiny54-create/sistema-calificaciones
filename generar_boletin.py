@@ -38,24 +38,23 @@ def generar_boletin_pdf(alumno, notas):
     elementos = []
 
     # ================= LOGO =================
-    # ================= LOGO =================
-if os.path.exists(logo_path):
-    logo = Image(logo_path, width=2.5 * cm, height=2.5 * cm)
+    if os.path.exists(logo_path):
+        logo = Image(logo_path, width=2.5 * cm, height=2.5 * cm)
 
-    tabla_logo = Table(
-        [[logo]],
-        colWidths=[doc.width]
-    )
+        tabla_logo = Table(
+            [[logo]],
+            colWidths=[doc.width]
+        )
 
-    tabla_logo.setStyle(TableStyle([
-        ("ALIGN", (0, 0), (0, 0), "LEFT"),
-        ("VALIGN", (0, 0), (0, 0), "TOP"),
-        ("LEFTPADDING", (0, 0), (0, 0), 0),
-        ("TOPPADDING", (0, 0), (0, 0), 0),
-        ("BOTTOMPADDING", (0, 0), (0, 0), 10),
-    ]))
+        tabla_logo.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (0, 0), "LEFT"),
+            ("VALIGN", (0, 0), (0, 0), "TOP"),
+            ("LEFTPADDING", (0, 0), (0, 0), 0),
+            ("TOPPADDING", (0, 0), (0, 0), 0),
+            ("BOTTOMPADDING", (0, 0), (0, 0), 10),
+        ]))
 
-    elementos.append(tabla_logo)
+        elementos.append(tabla_logo)
 
     # ================= ENCABEZADO =================
     elementos.append(Paragraph(
@@ -100,7 +99,11 @@ if os.path.exists(logo_path):
             promedio
         ])
 
-    tabla = Table(data, colWidths=[5*cm, 2*cm, 2*cm, 2*cm, 2*cm, 3*cm])
+    tabla = Table(
+        data,
+        colWidths=[5 * cm, 2 * cm, 2 * cm, 2 * cm, 2 * cm, 3 * cm]
+    )
+
     tabla.setStyle(TableStyle([
         ("GRID", (0, 0), (-1, -1), 1, colors.black),
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
