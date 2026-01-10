@@ -298,7 +298,10 @@ def admin_asignaciones():
     if request.method == "POST":
         docente_id = request.form["docente_id"]
         materia_id = request.form["materia_id"]
-        grado = request.form["grado"]
+
+        # ✅ TOMAR EL GRADO DESDE LA MATERIA
+        materia = Materia.query.get(materia_id)
+        grado = materia.grado
 
         existe = Asignacion.query.filter_by(
             docente_id=docente_id,
@@ -324,6 +327,7 @@ def admin_asignaciones():
         materias=materias,
         asignaciones=asignaciones
     )
+
 
 @app.route("/logout")
 @login_required
@@ -423,6 +427,7 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
 
