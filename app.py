@@ -5,6 +5,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from generar_boletin import generar_boletin_pdf
 from datetime import datetime
+from flask import jsonify
 import zipfile
 import os
 
@@ -299,10 +300,14 @@ def docente():
 @login_required
 def ajax_alumnos_materias():
     if current_user.rol != "docente":
-        return {"error": "No autorizado"}
+        return jsonify({"error": "No autorizado"}), 403
 
     grado = request.args.get("grado")
 
+    if not grado:
+        return jsonify({"materias": [], "alumnos": []})
+
+    # Materias asignadas al docente en ese grado
     asignaciones = Asignacion.query.filter_by(
         docente_id=current_user.id,
         grado=grado
@@ -313,12 +318,14 @@ def ajax_alumnos_materias():
         for a in asignaciones
     ]
 
-    alumnos = Alumno.query.filter_by(grado=grado).order_by(Alumno.nombre).all()
+    # Alumnos del grado
+    alumnos = Alumno.query.filter_by(grado=grado)\
+        .order_by(Alumno.nombre).all()
 
-    return {
+    return jsonify({
         "materias": materias,
-        "alumnos": [a.nombre for a in alumnos]
-    }
+        "alumnos": [{"nombre": a.nombre} for a in alumnos]
+    })
 
 
 
@@ -486,6 +493,7 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
 
