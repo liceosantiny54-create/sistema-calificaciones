@@ -80,6 +80,7 @@
   {% if request.form.get('grado') %}
 
     {% set lista_materias = materias_por_grado.get(request.form.get('grado'), []) %}
+    {% set lista_alumnos = alumnos_por_grado.get(request.form.get('grado'), []) %}
 
     {% if lista_materias %}
 
@@ -96,10 +97,16 @@
       </select>
 
       <!-- ALUMNO -->
-      <label>Nombre del Alumno:</label>
-      <input type="text" name="nombre"
-             value="{{ request.form.get('nombre','') }}"
-             placeholder="Nombre del alumno" required>
+      <label>Alumno:</label>
+      <select name="nombre" required>
+        <option value="">Seleccione alumno</option>
+        {% for alumno in lista_alumnos %}
+          <option value="{{ alumno.nombre }}"
+            {% if request.form.get('nombre') == alumno.nombre %}selected{% endif %}>
+            {{ alumno.nombre }}
+          </option>
+        {% endfor %}
+      </select>
 
       <!-- BLOQUE -->
       <label>Bloque:</label>
@@ -136,6 +143,7 @@
 
 </body>
 </html>
+
 
 
 
