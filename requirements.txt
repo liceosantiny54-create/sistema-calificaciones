@@ -4,3 +4,4 @@ flask_login
 werkzeug
 gunicorn
 reportlab
+psycopg2-binary
