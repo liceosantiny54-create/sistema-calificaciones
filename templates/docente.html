@@ -67,72 +67,40 @@
 
   <!-- GRADO -->
   <label>Grado:</label>
-  <select name="grado" required>
+  <select name="grado" id="grado" required>
     <option value="">Seleccione grado</option>
     {% for grado in grados %}
-      <option value="{{ grado }}"
-        {% if request.form.get('grado') == grado %}selected{% endif %}>
-        {{ grado }}
-      </option>
+      <option value="{{ grado }}">{{ grado }}</option>
     {% endfor %}
   </select>
 
-  {% if request.form.get('grado') %}
+  <!-- MATERIA -->
+  <label>Materia:</label>
+  <select name="materia_id" id="materia" required>
+    <option value="">Seleccione materia</option>
+  </select>
 
-    {% set lista_materias = materias_por_grado.get(request.form.get('grado'), []) %}
-    {% set lista_alumnos = alumnos_por_grado.get(request.form.get('grado'), []) %}
+  <!-- ALUMNO -->
+  <label>Alumno:</label>
+  <select name="nombre" id="alumno" required>
+    <option value="">Seleccione alumno</option>
+  </select>
 
-    {% if lista_materias %}
+  <!-- BLOQUE -->
+  <label>Bloque:</label>
+  <select name="bloque" required>
+    <option value="">Seleccione bloque</option>
+    <option value="1">Bloque 1</option>
+    <option value="2">Bloque 2</option>
+    <option value="3">Bloque 3</option>
+    <option value="4">Bloque 4</option>
+  </select>
 
-      <!-- MATERIA -->
-      <label>Materia:</label>
-      <select name="materia_id" required>
-        <option value="">Seleccione materia</option>
-        {% for materia in lista_materias %}
-          <option value="{{ materia.id }}"
-            {% if request.form.get('materia_id') == materia.id|string %}selected{% endif %}>
-            {{ materia.nombre }}
-          </option>
-        {% endfor %}
-      </select>
+  <!-- PUNTAJE -->
+  <label>Puntaje:</label>
+  <input type="number" name="puntaje" min="0" max="100" step="0.01" required>
 
-      <!-- ALUMNO -->
-      <label>Alumno:</label>
-      <select name="nombre" required>
-        <option value="">Seleccione alumno</option>
-        {% for alumno in lista_alumnos %}
-          <option value="{{ alumno.nombre }}"
-            {% if request.form.get('nombre') == alumno.nombre %}selected{% endif %}>
-            {{ alumno.nombre }}
-          </option>
-        {% endfor %}
-      </select>
-
-      <!-- BLOQUE -->
-      <label>Bloque:</label>
-      <select name="bloque" required>
-        <option value="">Seleccione bloque</option>
-        {% for b in ['1','2','3','4'] %}
-          <option value="{{ b }}"
-            {% if request.form.get('bloque') == b %}selected{% endif %}>
-            Bloque {{ b }}
-          </option>
-        {% endfor %}
-      </select>
-
-      <!-- PUNTAJE -->
-      <label>Puntaje:</label>
-      <input type="number" name="puntaje"
-             value="{{ request.form.get('puntaje','') }}"
-             min="0" max="100" step="0.01" required>
-
-      <button type="submit">Registrar Nota</button>
-
-    {% else %}
-      <p class="mensaje">No hay materias asignadas a este grado.</p>
-    {% endif %}
-
-  {% endif %}
+  <button type="submit">Registrar Nota</button>
 
 </form>
 
@@ -142,18 +110,17 @@
 </div>
 
 <script>
-document.querySelector('select[name="grado"]').addEventListener('change', function () {
+document.getElementById("grado").addEventListener("change", function () {
 
   const grado = this.value;
-
   if (!grado) return;
 
-  fetch(`/ajax/alumnos_materias?grado=${encodeURIComponent(grado)}`)
-    .then(response => response.json())
+  fetch(`/docente/datos/${encodeURIComponent(grado)}`)
+    .then(res => res.json())
     .then(data => {
 
-      const materiaSelect = document.querySelector('select[name="materia_id"]');
-      const alumnoSelect = document.querySelector('select[name="nombre"]');
+      const materiaSelect = document.getElementById("materia");
+      const alumnoSelect = document.getElementById("alumno");
 
       materiaSelect.innerHTML = '<option value="">Seleccione materia</option>';
       alumnoSelect.innerHTML = '<option value="">Seleccione alumno</option>';
@@ -163,15 +130,16 @@ document.querySelector('select[name="grado"]').addEventListener('change', functi
       });
 
       data.alumnos.forEach(a => {
-        alumnoSelect.innerHTML += `<option value="${a}">${a}</option>`;
+        alumnoSelect.innerHTML += `<option value="${a.nombre}">${a.nombre}</option>`;
       });
     });
 });
 </script>
 
-
 </body>
 </html>
+
+
 
 
 
