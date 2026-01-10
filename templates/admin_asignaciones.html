@@ -3,14 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <title>Asignaciones Docente</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 40px;
+        }
+
+        form {
+            background: white;
+            padding: 20px;
+            width: 420px;
+            margin: auto;
+            border-radius: 8px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        ul {
+            background: white;
+            padding: 20px;
+            width: 80%;
+            margin: 30px auto;
+            border-radius: 8px;
+            list-style: none;
+        }
+
+        li {
+            padding: 6px 0;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
 </head>
+
 <body>
 
-<h2>Asignar Materia a Docente</h2>
+<h2 style="text-align:center;">Asignar Materia a Docente</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <p style="text-align:center; color:red;">{{ message }}</p>
+  {% endfor %}
+{% endwith %}
 
 <form method="POST">
+
     <label>Docente:</label>
     <select name="docente_id" required>
+        <option value="">Seleccione docente</option>
         {% for d in docentes %}
             <option value="{{ d.id }}">{{ d.nombre }}</option>
         {% endfor %}
@@ -18,30 +75,36 @@
 
     <label>Materia:</label>
     <select name="materia_id" required>
+        <option value="">Seleccione materia</option>
         {% for m in materias %}
-            <option value="{{ m.id }}">{{ m.nombre }} ({{ m.grado }})</option>
+            <option value="{{ m.id }}">
+                {{ m.nombre }} ({{ m.grado }})
+            </option>
         {% endfor %}
     </select>
-
-    <label>Grado:</label>
-    <input type="text" name="grado" required>
 
     <button type="submit">Asignar</button>
 </form>
 
 <hr>
 
-<h3>Asignaciones actuales</h3>
+<h3 style="text-align:center;">Asignaciones actuales</h3>
+
 <ul>
     {% for a in asignaciones %}
         <li>
-            {{ a.docente.nombre }} →
-            {{ a.materia.nombre }} ({{ a.grado }})
+            👨‍🏫 {{ a.docente.nombre }} →
+            📘 {{ a.materia.nombre }} ({{ a.grado }})
         </li>
+    {% else %}
+        <li>No hay asignaciones registradas</li>
     {% endfor %}
 </ul>
 
-<a href="{{ url_for('admin') }}">Volver</a>
+<div style="text-align:center;">
+    <a href="{{ url_for('admin') }}">⬅ Volver al panel</a>
+</div>
 
 </body>
 </html>
+
