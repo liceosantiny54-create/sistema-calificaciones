@@ -38,11 +38,24 @@ def generar_boletin_pdf(alumno, notas):
     elementos = []
 
     # ================= LOGO =================
-    if os.path.exists(logo_path):
-        logo = Image(logo_path, width=4 * cm, height=4 * cm)
-        logo.hAlign = "CENTER"
-        elementos.append(logo)
-        elementos.append(Paragraph("<br/>", styles["Normal"]))
+    # ================= LOGO =================
+if os.path.exists(logo_path):
+    logo = Image(logo_path, width=2.5 * cm, height=2.5 * cm)
+
+    tabla_logo = Table(
+        [[logo]],
+        colWidths=[doc.width]
+    )
+
+    tabla_logo.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (0, 0), "LEFT"),
+        ("VALIGN", (0, 0), (0, 0), "TOP"),
+        ("LEFTPADDING", (0, 0), (0, 0), 0),
+        ("TOPPADDING", (0, 0), (0, 0), 0),
+        ("BOTTOMPADDING", (0, 0), (0, 0), 10),
+    ]))
+
+    elementos.append(tabla_logo)
 
     # ================= ENCABEZADO =================
     elementos.append(Paragraph(
@@ -112,5 +125,6 @@ def generar_boletin_pdf(alumno, notas):
     doc.build(elementos)
 
     return ruta_pdf
+
 
 
