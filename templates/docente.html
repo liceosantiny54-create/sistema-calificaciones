@@ -67,7 +67,7 @@
 
   <!-- GRADO -->
   <label>Grado:</label>
-  <select name="grado" onchange="this.form.submit()" required>
+  <select name="grado" required>
     <option value="">Seleccione grado</option>
     {% for grado in grados %}
       <option value="{{ grado }}"
@@ -172,6 +172,7 @@ document.querySelector('select[name="grado"]').addEventListener('change', functi
 
 </body>
 </html>
+
 
 
 
