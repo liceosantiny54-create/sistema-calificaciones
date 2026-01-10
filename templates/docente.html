@@ -115,7 +115,7 @@ document.getElementById("grado").addEventListener("change", function () {
   const grado = this.value;
   if (!grado) return;
 
-  fetch(`/docente/datos/${encodeURIComponent(grado)}`)
+  fetch(`/ajax/alumnos_materias?grado=${encodeURIComponent(grado)}`)
     .then(res => res.json())
     .then(data => {
 
@@ -129,10 +129,14 @@ document.getElementById("grado").addEventListener("change", function () {
         materiaSelect.innerHTML += `<option value="${m.id}">${m.nombre}</option>`;
       });
 
-      data.alumnos.forEach(a => {
-        alumnoSelect.innerHTML += `<option value="${a.nombre}">${a.nombre}</option>`;
+      data.alumnos.forEach(nombre => {
+        alumnoSelect.innerHTML += `<option value="${nombre}">${nombre}</option>`;
       });
+    })
+    .catch(err => {
+      console.error("Error AJAX:", err);
     });
+
 });
 </script>
 
