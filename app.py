@@ -207,6 +207,7 @@ def docente():
     if current_user.rol != "docente":
         return redirect(url_for("login"))
 
+    # Asignaciones del docente
     asignaciones = Asignacion.query.filter_by(
         docente_id=current_user.id
     ).all()
@@ -218,49 +219,72 @@ def docente():
         materias_por_grado.setdefault(a.grado, []).append(a.materia)
 
     if request.method == "POST":
+
+        # Obtener datos de forma SEGURA
+        grado = request.form.get("grado")
+        materia_id = request.form.get("materia_id")
+        nombre = request.form.get("nombre")
+        bloque = request.form.get("bloque")
+        puntaje = request.form.get("puntaje")
+
+        # 🔹 SI SOLO SE CAMBIÓ EL GRADO → NO HACER NADA
+        if not (grado and materia_id and nombre and bloque and puntaje):
+            return render_template(
+                "docente.html",
+                grados=grados,
+                materias_por_grado=materias_por_grado
+            )
+
+        # Buscar alumno
         alumno = Alumno.query.filter_by(
-            nombre=request.form["nombre"],
-            grado=request.form["grado"]
+            nombre=nombre,
+            grado=grado
         ).first()
 
         if not alumno:
             flash("Alumno no encontrado en ese grado", "error")
             return redirect(url_for("docente"))
 
+        # Verificar permiso del docente
         permitido = Asignacion.query.filter_by(
             docente_id=current_user.id,
-            materia_id=request.form["materia_id"],
-            grado=request.form["grado"]
+            materia_id=materia_id,
+            grado=grado
         ).first()
 
         if not permitido:
             flash("No autorizado", "error")
             return redirect(url_for("docente"))
 
+        # Evitar nota duplicada
         if Nota.query.filter_by(
             alumno_id=alumno.id,
             materia=permitido.materia.nombre,
-            bloque=request.form["bloque"]
+            bloque=bloque
         ).first():
             flash("Nota duplicada", "error")
             return redirect(url_for("docente"))
 
+        # Guardar nota
         db.session.add(Nota(
             alumno_id=alumno.id,
             materia=permitido.materia.nombre,
-            bloque=int(request.form["bloque"]),
-            puntaje=float(request.form["puntaje"])
+            bloque=int(bloque),
+            puntaje=float(puntaje)
         ))
         db.session.commit()
 
         registrar_auditoria("CREAR_NOTA", alumno.nombre)
-        flash("Nota registrada", "success")
+        flash("Nota registrada correctamente", "success")
+
+        return redirect(url_for("docente"))
 
     return render_template(
         "docente.html",
         grados=grados,
         materias_por_grado=materias_por_grado
     )
+
 
 
 @app.route("/admin/alumnos", methods=["GET", "POST"])
@@ -427,6 +451,7 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
 
