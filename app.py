@@ -207,35 +207,45 @@ def docente():
     if current_user.rol != "docente":
         return redirect(url_for("login"))
 
-    # Asignaciones del docente
+    # ================= ASIGNACIONES =================
     asignaciones = Asignacion.query.filter_by(
         docente_id=current_user.id
     ).all()
 
     grados = sorted(set(a.grado for a in asignaciones))
     materias_por_grado = {}
+    alumnos_por_grado = {}
 
     for a in asignaciones:
+        # Materias por grado
         materias_por_grado.setdefault(a.grado, []).append(a.materia)
 
+        # Alumnos por grado (AUTOMÁTICO)
+        alumnos = Alumno.query.filter_by(
+            grado=a.grado
+        ).order_by(Alumno.nombre).all()
+
+        alumnos_por_grado[a.grado] = alumnos
+
+    # ================= POST =================
     if request.method == "POST":
 
-        # Obtener datos de forma SEGURA
         grado = request.form.get("grado")
         materia_id = request.form.get("materia_id")
         nombre = request.form.get("nombre")
         bloque = request.form.get("bloque")
         puntaje = request.form.get("puntaje")
 
-        # 🔹 SI SOLO SE CAMBIÓ EL GRADO → NO HACER NADA
+        # 🔹 Si solo se seleccionó grado → recargar formulario
         if not (grado and materia_id and nombre and bloque and puntaje):
             return render_template(
                 "docente.html",
                 grados=grados,
-                materias_por_grado=materias_por_grado
+                materias_por_grado=materias_por_grado,
+                alumnos_por_grado=alumnos_por_grado
             )
 
-        # Buscar alumno
+        # ================= VALIDACIONES =================
         alumno = Alumno.query.filter_by(
             nombre=nombre,
             grado=grado
@@ -245,7 +255,6 @@ def docente():
             flash("Alumno no encontrado en ese grado", "error")
             return redirect(url_for("docente"))
 
-        # Verificar permiso del docente
         permitido = Asignacion.query.filter_by(
             docente_id=current_user.id,
             materia_id=materia_id,
@@ -256,16 +265,15 @@ def docente():
             flash("No autorizado", "error")
             return redirect(url_for("docente"))
 
-        # Evitar nota duplicada
         if Nota.query.filter_by(
             alumno_id=alumno.id,
             materia=permitido.materia.nombre,
-            bloque=bloque
+            bloque=int(bloque)
         ).first():
             flash("Nota duplicada", "error")
             return redirect(url_for("docente"))
 
-        # Guardar nota
+        # ================= GUARDAR =================
         db.session.add(Nota(
             alumno_id=alumno.id,
             materia=permitido.materia.nombre,
@@ -279,12 +287,13 @@ def docente():
 
         return redirect(url_for("docente"))
 
+    # ================= GET =================
     return render_template(
         "docente.html",
         grados=grados,
-        materias_por_grado=materias_por_grado
+        materias_por_grado=materias_por_grado,
+        alumnos_por_grado=alumnos_por_grado
     )
-
 
 
 @app.route("/admin/alumnos", methods=["GET", "POST"])
@@ -451,6 +460,7 @@ with app.app_context():
             db.session.add(Materia(nombre=nombre, grado=grado))
 
     db.session.commit()
+
 
 
 
